@@ -9,7 +9,10 @@ import {
   jsonb,
   primaryKey,
   index,
+  unique,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const profiles = pgTable(
   "profiles",
@@ -108,4 +111,67 @@ export const profileValues = pgTable(
     primaryKey({ columns: [table.profileId, table.valueId] }),
     index("profile_values_value_id_idx").on(table.valueId),
   ]
+);
+
+export const likes = pgTable(
+  "likes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    likerId: uuid("liker_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    likedId: uuid("liked_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("likes_liker_liked_unique").on(table.likerId, table.likedId),
+    // Supports the reverse-like lookup done when checking for a mutual match.
+    index("likes_liked_id_idx").on(table.likedId),
+  ]
+);
+
+export const matches = pgTable(
+  "matches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileOneId: uuid("profile_one_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    profileTwoId: uuid("profile_two_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("matches_profile_pair_unique").on(table.profileOneId, table.profileTwoId),
+    // Application code always normalizes the pair (lower uuid first) before
+    // insert; this constraint rejects anything that skips that normalization.
+    check("matches_ordered_pair_check", sql`${table.profileOneId} < ${table.profileTwoId}`),
+    index("matches_profile_one_id_idx").on(table.profileOneId),
+    index("matches_profile_two_id_idx").on(table.profileTwoId),
+  ]
+);
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id, { onDelete: "cascade" }),
+    senderId: uuid("sender_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("messages_match_id_created_at_idx").on(table.matchId, table.createdAt)]
 );

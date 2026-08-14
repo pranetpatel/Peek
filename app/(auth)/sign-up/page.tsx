@@ -6,6 +6,7 @@ import { signUp, type AuthActionResult } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DemoModeLink } from "@/components/demo/DemoModeLink";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SignUpPage() {
@@ -42,6 +43,7 @@ export default function SignUpPage() {
               Sign in
             </Link>
           </p>
+          <DemoModeLink />
         </CardContent>
       </Card>
     </div>

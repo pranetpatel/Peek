@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
+import { Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { DemoBadge } from "@/components/demo/DemoBadge";
 import "./globals.css";
 
 const bodySans = Plus_Jakarta_Sans({
@@ -33,6 +35,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster />
+        <Suspense fallback={null}>
+          <DemoBadge />
+        </Suspense>
       </body>
     </html>
   );

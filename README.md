@@ -4,6 +4,23 @@ A dating app focused on personality, hobby, and values-based matching. Built wit
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Demo mode (development only)
+
+Demo mode signs you in as a seeded fake account so every feature can be exercised
+without creating a real Supabase user or uploading real photos. It's on whenever
+`NODE_ENV !== "production"`, and off in production unless `NEXT_PUBLIC_ENABLE_DEMO=true`.
+
+- Open [/demo](http://localhost:3000/demo), or use the "Enter demo mode" link under the
+  sign-in / sign-up forms.
+- Personas: **Ava** (fully set up, pre-existing matches and chat history), **Ben**
+  (onboarded, no matches — empty states), **Fresh account** (drops into onboarding step one).
+- Everything except Supabase is real: profiles, likes, matches and messages are ordinary
+  Postgres rows, so only `DATABASE_URL` is required. Auth is a cookie naming the persona,
+  and photos are generated SVGs served from `/demo/avatar`.
+- Demo rows all use fixed `de300000-…` ids. "Reset demo data" on the panel (or
+  `npm run demo:seed`) deletes every like/match/message involving them and re-seeds the
+  scripted starting state. Real accounts are never touched.
+
 ## Getting Started
 
 First, run the development server:

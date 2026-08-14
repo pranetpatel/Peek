@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "demo:seed": "tsx scripts/demo-seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

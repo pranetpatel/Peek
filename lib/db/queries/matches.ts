@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import {
   hobbies,
   matches,
-  messages,
   photos,
   profileHobbies,
   profileValues,
@@ -71,8 +70,11 @@ export function otherProfileId(match: { profileOneId: string; profileTwoId: stri
 }
 
 export async function getMatchesForProfile(profileId: string): Promise<MatchListItem[]> {
-  const lastMessageBodyExpr = sql<string | null>`(select ${messages.body} from ${messages} where ${messages.matchId} = ${matches.id} order by ${messages.createdAt} desc limit 1)`;
-  const lastMessageAtExpr = sql<Date | null>`(select ${messages.createdAt} from ${messages} where ${messages.matchId} = ${matches.id} order by ${messages.createdAt} desc limit 1)`;
+  // Identifiers are spelled out because drizzle renders bare column names
+  // inside these correlated subqueries — an unqualified "id" would resolve to
+  // messages.id rather than the outer matches.id.
+  const lastMessageBodyExpr = sql<string | null>`(select "messages"."body" from "messages" where "messages"."match_id" = "matches"."id" order by "messages"."created_at" desc limit 1)`;
+  const lastMessageAtExpr = sql<Date | null>`(select "messages"."created_at" from "messages" where "messages"."match_id" = "matches"."id" order by "messages"."created_at" desc limit 1)`;
 
   const rows = await db
     .select({
@@ -85,7 +87,8 @@ export async function getMatchesForProfile(profileId: string): Promise<MatchList
     })
     .from(matches)
     .where(or(eq(matches.profileOneId, profileId), eq(matches.profileTwoId, profileId)))
-    .orderBy(sql`coalesce(last_message_at, ${matches.createdAt}) desc`);
+    // ORDER BY can't reference the last_message_at alias from inside coalesce().
+    .orderBy(sql`coalesce(${lastMessageAtExpr}, "matches"."created_at") desc`);
 
   if (rows.length === 0) return [];
 

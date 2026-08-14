@@ -53,11 +53,20 @@ export async function getBrowseBatch(input: {
   const interestedInClause =
     interestedIn.length > 0 ? inArray(profiles.gender, interestedIn) : undefined;
 
+  // The outer profiles.id has to be spelled out: drizzle renders bare column
+  // names inside these correlated subqueries, which would bind to the inner
+  // table instead.
   const sharedHobbiesExpr = myHobbyIds.length
-    ? sql<number>`(select count(*) from ${profileHobbies} where ${profileHobbies.profileId} = ${profiles.id} and ${profileHobbies.hobbyId} = any(${myHobbyIds}::uuid[]))`
+    ? sql<number>`(select count(*) from ${profileHobbies} where ${profileHobbies.profileId} = "profiles"."id" and ${profileHobbies.hobbyId} in (${sql.join(
+        myHobbyIds.map((id) => sql`${id}::uuid`),
+        sql`, `
+      )}))`
     : sql<number>`0`;
   const sharedValuesExpr = myValueIds.length
-    ? sql<number>`(select count(*) from ${profileValues} where ${profileValues.profileId} = ${profiles.id} and ${profileValues.valueId} = any(${myValueIds}::uuid[]))`
+    ? sql<number>`(select count(*) from ${profileValues} where ${profileValues.profileId} = "profiles"."id" and ${profileValues.valueId} in (${sql.join(
+        myValueIds.map((id) => sql`${id}::uuid`),
+        sql`, `
+      )}))`
     : sql<number>`0`;
 
   const candidates = await db
@@ -79,7 +88,9 @@ export async function getBrowseBatch(input: {
         excludeClause
       )
     )
-    .orderBy(sql`(shared_hobbies + shared_values) desc, random()`)
+    // Postgres only accepts a bare output alias in ORDER BY, never one inside
+    // an expression, so the overlap counts are repeated here.
+    .orderBy(sql`(${sharedHobbiesExpr} + ${sharedValuesExpr}) desc, random()`)
     .limit(BATCH_SIZE);
 
   if (candidates.length === 0) return [];

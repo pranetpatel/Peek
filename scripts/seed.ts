@@ -3,41 +3,7 @@ config({ path: ".env.local" });
 
 import { db } from "@/lib/db";
 import { hobbies, values, profiles, profileHobbies, profileValues } from "@/lib/db/schema";
-
-// Curated hobby taxonomy grouped by category. Slugs are used to look up ids
-// when wiring up demo profiles below, so they must stay in sync with HOBBY_DATA.
-const HOBBY_DATA: { category: string; items: string[] }[] = [
-  { category: "Music", items: ["Live concerts", "Playing guitar", "Vinyl collecting", "Singing", "Music production", "Piano"] },
-  { category: "Reading", items: ["Fiction", "Sci-fi & fantasy", "Nonfiction", "Poetry", "Book clubs", "Graphic novels"] },
-  { category: "Outdoors", items: ["Hiking", "Camping", "Rock climbing", "Surfing", "Trail running", "Gardening"] },
-  { category: "Fitness", items: ["Weightlifting", "Yoga", "Running", "Cycling", "Martial arts", "Pilates"] },
-  { category: "Food & Drink", items: ["Cooking", "Baking", "Coffee brewing", "Wine tasting", "Trying new restaurants", "Craft beer"] },
-  { category: "Creative", items: ["Painting", "Photography", "Writing", "Filmmaking", "Pottery", "Design"] },
-  { category: "Games", items: ["Board games", "Video games", "Chess", "Trivia nights", "Card games"] },
-  { category: "Travel", items: ["Backpacking", "Road trips", "Language learning", "Cultural festivals", "Scuba diving"] },
-];
-
-// Curated values taxonomy with optional short descriptions.
-const VALUES_DATA: { label: string; description?: string }[] = [
-  { label: "Goal-oriented", description: "Driven by ambition and long-term plans" },
-  { label: "Education", description: "Lifelong learning matters deeply" },
-  { label: "Family-focused", description: "Family is a top priority" },
-  { label: "Adventurous", description: "Seeks new experiences and risk" },
-  { label: "Financially responsible" },
-  { label: "Spiritual", description: "Guided by faith or spiritual practice" },
-  { label: "Community-minded", description: "Invested in local community and giving back" },
-  { label: "Health-conscious" },
-  { label: "Creative expression" },
-  { label: "Environmental sustainability" },
-  { label: "Honesty", description: "Directness and transparency above all" },
-  { label: "Independence" },
-  { label: "Loyalty" },
-  { label: "Personal growth", description: "Actively working on self-improvement" },
-  { label: "Career-driven" },
-  { label: "Work-life balance" },
-  { label: "Open-mindedness" },
-  { label: "Humor", description: "Doesn't take life too seriously" },
-];
+import { HOBBY_DATA, VALUES_DATA, taxonomySlug } from "@/lib/db/taxonomyData";
 
 // Demo profiles reference hobbies/values by label so overlap can be checked
 // by hand during manual verification without cross-referencing ids.
@@ -148,7 +114,7 @@ async function main() {
   const hobbyRows: { id: string; label: string }[] = [];
   for (const [categoryIndex, group] of HOBBY_DATA.entries()) {
     for (const [itemIndex, label] of group.items.entries()) {
-      const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const slug = taxonomySlug(label);
       const [row] = await db
         .insert(hobbies)
         .values({ slug, label, category: group.category, sortOrder: categoryIndex * 100 + itemIndex })
@@ -161,7 +127,7 @@ async function main() {
   console.log("Seeding values...");
   const valueRows: { id: string; label: string }[] = [];
   for (const [index, item] of VALUES_DATA.entries()) {
-    const slug = item.label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const slug = taxonomySlug(item.label);
     const [row] = await db
       .insert(values)
       .values({ slug, label: item.label, description: item.description, sortOrder: index })

@@ -210,7 +210,7 @@ export function WaterHero() {
         uDensity: { value: DENSITY },
         uSpeed: { value: SPEED },
         uTurb: { value: TURB },
-        uMask: { value: maskTex },
+        uMask: { value: maskTex as CanvasTexture | null },
         uR0: { value: new Vector4(0, 0, -1, 0) },
         uR1: { value: new Vector4(0, 0, -1, 0) },
         uR2: { value: new Vector4(0, 0, -1, 0) },

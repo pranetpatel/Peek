@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { WaterHero } from "@/components/water-hero";
 import { Reveal } from "@/components/reveal";
+import { LandingDemoLink } from "@/components/demo/DemoModeLink";
 
 const PILLARS = [
   {
@@ -84,6 +85,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <p className="text-xs text-white/35">Free to join. No swipe quotas, ever.</p>
+            <LandingDemoLink />
           </div>
         </Reveal>
       </section>

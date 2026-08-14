@@ -1,6 +1,21 @@
 import Link from "next/link";
 import { isDemoEnabled } from "@/lib/demo/config";
 
+/** Same entry point, styled for the landing page's dark hero. Hidden in production. */
+export function LandingDemoLink() {
+  if (!isDemoEnabled()) return null;
+
+  return (
+    <Link
+      href="/demo"
+      className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-teal-500/40 text-sm font-medium text-teal-300 transition-all duration-200 hover:border-teal-400/70 hover:bg-teal-500/10 active:translate-y-px"
+    >
+      <span className="size-1.5 rounded-full bg-teal-400" aria-hidden />
+      Demo mode — no sign-up needed
+    </Link>
+  );
+}
+
 /** Entry point into demo mode from the auth screens. Hidden in production. */
 export function DemoModeLink() {
   if (!isDemoEnabled()) return null;

@@ -60,8 +60,8 @@ const CONTOUR = {
 const MASK_BLEND = { EDGE_LO: 0.38, EDGE_HI: 0.62 };
 
 const PALETTE = {
-  BG: [0.8, 1.0, 0.0],
-  FILL: [0.765, 0.518, 1.0],
+  BG: [0.0, 0.0, 0.0],
+  FILL: [0.078, 0.722, 0.651], // teal-500
 };
 
 const BASE_WAVES = [
@@ -108,7 +108,7 @@ export function WaterHero() {
 
       const fontFamily =
         getComputedStyle(document.documentElement)
-          .getPropertyValue("--font-unbounded")
+          .getPropertyValue("--font-display")
           .trim() || `"Arial Black", sans-serif`;
 
       const renderer = new WebGLRenderer({ antialias: true, alpha: true });

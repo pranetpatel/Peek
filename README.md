@@ -7,8 +7,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ## Demo mode (development only)
 
 Demo mode signs you in as a seeded fake account so every feature can be exercised
-without creating a real Supabase user or uploading real photos. It's on whenever
-`NODE_ENV !== "production"`, and off in production unless `NEXT_PUBLIC_ENABLE_DEMO=true`.
+without creating a real Supabase user or uploading real photos. It's on in `next dev`
+and on Vercel preview/branch deployments. The production domain is off unless you set
+`NEXT_PUBLIC_ENABLE_DEMO=true` (and `=false` force-disables it anywhere).
 
 - Open [/demo](http://localhost:3000/demo), or use the "Enter demo mode" link under the
   sign-in / sign-up forms.

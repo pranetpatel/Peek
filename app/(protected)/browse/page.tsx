@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getProfileById } from "@/lib/db/queries/profiles";
 import { getNextBrowseBatch } from "./actions";
 import { BrowseDeck } from "@/components/profile/BrowseDeck";
+import { PeekLogo } from "@/components/brand/PeekLogo";
 import { signOut } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +19,9 @@ export default async function BrowsePage() {
   return (
     <div className="min-h-screen px-4 py-8">
       <div className="mx-auto flex w-full max-w-sm items-center justify-between pb-6">
-        <h1 className="text-lg font-semibold">Peek</h1>
+        <h1 className="text-lg">
+          <PeekLogo />
+        </h1>
         <form action={signOut}>
           <Button type="submit" variant="ghost" size="sm">
             Sign out

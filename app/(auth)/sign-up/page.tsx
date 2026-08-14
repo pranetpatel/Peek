@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DemoModeLink } from "@/components/demo/DemoModeLink";
+import { PeekLogo } from "@/components/brand/PeekLogo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SignUpPage() {
@@ -19,6 +20,7 @@ export default function SignUpPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
+          <PeekLogo className="text-muted-foreground" />
           <CardTitle>Create your account</CardTitle>
           <CardDescription>Start building a profile that shows who you really are.</CardDescription>
         </CardHeader>

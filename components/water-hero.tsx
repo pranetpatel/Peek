@@ -14,10 +14,10 @@ import {
   LinearFilter,
 } from "three";
 
-// Fixed "look" for the landing page hero: lowest density, lowest speed,
+// Fixed "look" for the landing page hero: lowest density, gentle ambient drift,
 // half turbulence, text scaled to fill the width of the section.
 const DENSITY = 2; // slider min
-const SPEED = 0; // slider min (0-100 -> 0)
+const SPEED = 0.6; // reference speed for ripple/swell phase rates
 const TURB = 0.5; // half of slider (0-100 -> 0.5)
 const FONT_SCALE_SLIDER = 100; // fills the section edge-to-edge
 const TEXT = "PEEK";
@@ -46,8 +46,18 @@ const RIPPLE = {
 const MOUSE_SWELL = {
   DIST_FALLOFF: 2.5,
   FREQUENCY: 9.0,
-  SPEED_MUL: 5.0,
+  SPEED_MUL: 2.0,
   AMPLITUDE: 1.2,
+};
+
+// Ambient current: the surface is always moving, scrolling nudges it along.
+const FLOW = {
+  IDLE_RATE: 0.28, // baseline drift, in shader-time units per second
+  SCROLL_IMPULSE: 0.0016, // extra flow time added per pixel scrolled
+  SCROLL_MAX_IMPULSE: 0.35, // clamp so a flick can't fast-forward the surface
+  DRIFT_PER_SCROLL_PX: 0.00035, // vertical displacement of the wave field
+  DRIFT_DECAY: 1.6, // how fast that displacement eases back to rest
+  MOUSE_EASE: 6.0, // cursor follow smoothing (higher = snappier)
 };
 
 const CONTOUR = {
@@ -200,6 +210,8 @@ export function WaterHero() {
 
       const uniforms = {
         uTime: { value: 0.0 },
+        uFlow: { value: 0.0 },
+        uDrift: { value: 0.0 },
         uRes: {
           value: new Vector2(
             container!.clientWidth * renderer.getPixelRatio(),
@@ -221,6 +233,8 @@ export function WaterHero() {
         precision highp float;
 
         uniform float     uTime;
+        uniform float     uFlow;
+        uniform float     uDrift;
         uniform vec2      uRes;
         uniform vec2      uMouse;
         uniform float     uDensity;
@@ -269,8 +283,8 @@ export function WaterHero() {
         void main() {
           vec2  uv = gl_FragCoord.xy / uRes;
           float ar = uRes.x / uRes.y;
-          vec2  p  = vec2(uv.x * ar, uv.y);
-          float t  = uTime * uSpeed;
+          vec2  p  = vec2(uv.x * ar, uv.y + uDrift);
+          float t  = uFlow;
 
           float insideMask = texture2D(uMask, uv).r;
           float mask       = smoothstep(MASK_EDGE_LO, MASK_EDGE_HI, insideMask);
@@ -328,13 +342,31 @@ ${TURB_WAVES.map(turbWaveGLSL).join("\n")}
       const resizeObserver = new ResizeObserver(resize);
       resizeObserver.observe(container!);
 
+      // Cursor is eased towards its target so the swell trails the pointer
+      // instead of teleporting with it.
+      const mouseTarget = new Vector2(0.5, 0.5);
+
       function handlePointerMove(e: PointerEvent) {
         const rect = container!.getBoundingClientRect();
-        uniforms.uMouse.value.set(
+        mouseTarget.set(
           (e.clientX - rect.left) / rect.width,
           1 - (e.clientY - rect.top) / rect.height,
         );
       }
+
+      let lastScrollY = window.scrollY;
+      let flow = 0;
+      let drift = 0;
+
+      function handleScroll() {
+        const delta = window.scrollY - lastScrollY;
+        lastScrollY = window.scrollY;
+        const magnitude = Math.abs(delta);
+        flow += Math.min(magnitude * FLOW.SCROLL_IMPULSE, FLOW.SCROLL_MAX_IMPULSE);
+        drift += delta * FLOW.DRIFT_PER_SCROLL_PX;
+      }
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
 
       const rippleSlots = [uniforms.uR0, uniforms.uR1, uniforms.uR2, uniforms.uR3];
       let rippleIndex = 0;
@@ -362,7 +394,16 @@ ${TURB_WAVES.map(turbWaveGLSL).join("\n")}
         const dt = lastTimestamp === null ? 0 : Math.min((timestamp - lastTimestamp) / 1000, 0.05);
         lastTimestamp = timestamp;
         elapsed += dt;
+
+        flow += dt * FLOW.IDLE_RATE;
+        drift -= drift * Math.min(dt * FLOW.DRIFT_DECAY, 1);
+
+        const ease = Math.min(dt * FLOW.MOUSE_EASE, 1);
+        uniforms.uMouse.value.lerp(mouseTarget, ease);
+
         uniforms.uTime.value = elapsed;
+        uniforms.uFlow.value = flow;
+        uniforms.uDrift.value = drift;
         renderer.render(scene, camera);
       }
       rafId = requestAnimationFrame(loop);
@@ -372,6 +413,7 @@ ${TURB_WAVES.map(turbWaveGLSL).join("\n")}
         resizeObserver.disconnect();
         container!.removeEventListener("pointermove", handlePointerMove);
         container!.removeEventListener("click", handleClick);
+        window.removeEventListener("scroll", handleScroll);
         renderer.dispose();
         material.dispose();
         maskTex?.dispose();
